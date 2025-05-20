@@ -1,8 +1,0 @@
-{
-    "name": "file-crypt",
-    "version": "0.1.0",
-    "dependencies": [
-        "openssl",
-        "doctest"
-    ]
-}
