@@ -47,21 +47,21 @@ PLAINTEXT ──► │ PBKDF2-HMAC│── password ─►│   256-bit key   
               └──────────────────────────────────────────┘
 ```
 
-Resulting layout:
+Формат выходного буфера:
 ```
 tag(32) | salt(16) | iv(16) | ciphertext(N)
 ```
-Optional key exchange:
+Опциональный **обмен ключом**:
 ```
 AES-key ── RSA-encrypt (pub) ──►  partner
           ◄── RSA-decrypt (priv) ──
 ```
 
-The asymmetric stage is deliberately decoupled from the symmetric codec: you may ignore it entirely or swap RSA for X25519/ECIES later.
+Асимметричный этап умышленно **отделён** от симметрического: хотите — игнорируйте, хотите — замените RSA на X25519/ECIES.
 
 ---
 
-## 📦 Build & test
+## 📦 Сборка и тесты
 ```
 git clone https://github.com/<you>/file-crypt.git
 cd file-crypt
@@ -70,7 +70,7 @@ cmake -B build -S .
 cmake --build build         # builds lib + cli + tests
 ctest --test-dir build -V   # doctest banner, 3/3 tests pass
 ```
-<details> <summary>Typical test run</summary>
+<details> <summary>Пример запуска тестов</summary>
 
   ```
 [doctest] doctest version is 2.4.11
@@ -84,28 +84,28 @@ TEST CASE:  AES round-trip
 ```
 </details>
 
-## 🚀 CLI usage
+## 🚀 Использование CLI
 
 ```
-# symmetric encryption
+# симметричное шифрование
 ./filecrypt_cli enc secret.pdf secret.enc "Tr0ub4dor&3"
 
-# decryption (integrity checked, wrong pass → non-zero exit code)
+# расшифрование (проверяется целостность; неверный пароль → ненулевой код выхода)
 ./filecrypt_cli dec secret.enc recovered.pdf "Tr0ub4dor&3"
 ```
 
-Advanced example – share a file with Alice without leaking your pass-phrase:
+Обмен с Алиcой без раскрытия пароля
 
 ```
-./filecrypt_cli genkeys alice             # prints alice_priv.pem & alice_pub.pem
-./filecrypt_cli wrapkey secret.enc alice_pub.pem wrapped.bin   # encrypt AES-key
-# send secret.enc + wrapped.bin to Alice
-# Alice recovers AES-key:
+./filecrypt_cli genkeys alice             # alice_priv.pem & alice_pub.pem
+./filecrypt_cli wrapkey secret.enc alice_pub.pem wrapped.bin   # обёртка AES-ключа
+# отправляем secret.enc + wrapped.bin Алисе
+# Алиса восстанавливает ключ:
 ./filecrypt_cli unwrapkey wrapped.bin alice_priv.pem key.bin
 ```
 
-(`genkeys`, `wrapkey`, `unwrapkey` are sub-commands exposed by the same binary; see `--help` for all options)
+(`genkeys`, `wrapkey`, `unwrapkey`— это подкоманды того же бинарника; `--help` покажет все)
 
-## 🔐 Security disclaimer
+## 🔐 Дисклеймер безопасности
 
-`AES-encryption-based-on-RSA-keys` follows modern best-practices but **is not a replacement for mature audited products** like age, gocryptfs or libsodium. Use it as a reference, tutorial, or lightweight utility; **do not store the nuclear launch codes.**
+`AES-encryption-based-on-RSA-keys` следует современным best-practice, **но не заменяет зрелые, аудированные решения** вроде *age*, *gocryptfs* или *libsodium*. Используйте как справочник, учебный пример или лёгкую утилиту; **не храните коды запуска ракет.**
