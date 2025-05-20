@@ -1,28 +1,40 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.5)
 project(file-crypt LANGUAGES CXX)
 
-# Компилятор + стандарт
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -pedantic)
 
-# vcpkg интеграция
-include(${CMAKE_TOOLCHAIN_FILE})
+# ---------- OpenSSL --------------------------------------------------------
+find_package(OpenSSL REQUIRED QUIET)
 
-find_package(OpenSSL REQUIRED)
-find_package(doctest CONFIG REQUIRED)
+# ---------- doctest: сначала ищем, при отсутствии — FetchContent -----------
 
-# Библиотека
-add_library(filecrypt STATIC src/Crypto.cpp)
-target_include_directories(filecrypt PUBLIC ${PROJECT_SOURCE_DIR}/include)
+find_package(doctest CONFIG QUIET)
+
+if(NOT doctest_FOUND)
+    include(FetchContent)
+
+    # полноценный архив с CMake-скриптами doctest
+    FetchContent_Declare(
+        doctest
+        URL https://github.com/doctest/doctest/archive/refs/tags/v2.4.11.tar.gz
+        # при желании укажите URL_HASH SHA256=<хеш>
+    )
+    FetchContent_MakeAvailable(doctest)   # добавит target doctest::doctest
+endif()
+
+# ---------- библиотека -----------------------------------------------------
+add_library(filecrypt STATIC crypto.cpp)
+target_include_directories(filecrypt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(filecrypt PUBLIC OpenSSL::SSL OpenSSL::Crypto)
 
-# CLI-утилита
-add_executable(filecrypt_cli src/main.cpp)
+# ---------- CLI ------------------------------------------------------------
+add_executable(filecrypt_cli main.cpp)
 target_link_libraries(filecrypt_cli PRIVATE filecrypt)
 
-# Тесты
+# ---------- тесты ----------------------------------------------------------
 enable_testing()
-add_executable(filecrypt_tests tests/test_crypto.cpp)
+add_executable(filecrypt_tests tests.cpp)
 target_link_libraries(filecrypt_tests PRIVATE filecrypt doctest::doctest)
-add_test(NAME all FILE filecrypt_tests)
+add_test(NAME all COMMAND filecrypt_tests)
